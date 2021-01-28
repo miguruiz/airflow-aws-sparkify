@@ -11,17 +11,17 @@ class StageToRedshiftOperator(BaseOperator):
         FROM '{}'
         ACCESS_KEY_ID '{}'
         SECRET_ACCESS_KEY '{}'
-        JSON 'auto'
+        JSON '{}'
         """
-
+    template_fields = ("s3_path",)
+    
     @apply_defaults
     def __init__(self,              
                  redshift_conn_id = '',
                  aws_credentials_id = '',
-                 s3_path =  '',
+                 s3_path = '',
                  table_name = '',
-                 ignore_headers = '',
-                 delimiter = '',
+                 json = 'auto',
                  *args, **kwargs):
 
         super(StageToRedshiftOperator, self).__init__(*args, **kwargs)
@@ -29,8 +29,7 @@ class StageToRedshiftOperator(BaseOperator):
         self.aws_credentials_id = aws_credentials_id
         self.s3_path =  s3_path
         self.table_name = table_name
-        self.ignore_headers = ignore_headers
-        self.delimiter = delimiter
+        self.json = json
 
     def execute(self, context):       
         aws_hook = AwsHook(self.aws_credentials_id)
@@ -39,15 +38,20 @@ class StageToRedshiftOperator(BaseOperator):
 
         self.log.info(f"Clearing data from {self.table_name} Redshift table")
         redshift.run("DELETE FROM {}".format(self.table_name))
-
         
+        if self.table_name == 'staging_events':
+            path = self.s3_path.format(**context)
+        else:
+            path = self.s3_path
+
         self.log.info("Copying data from S3 to Redshift")
 
         formatted_sql = StageToRedshiftOperator.copy_sql.format(
             self.table_name,
-            self.s3_path,
+            path,
             credentials.access_key,
-            credentials.secret_key
+            credentials.secret_key,
+            self.json
         )
         redshift.run(formatted_sql)
 

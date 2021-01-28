@@ -62,7 +62,7 @@ CREATE TABLE IF NOT EXISTS  public.staging_songs (
 	"year" int4
 );
 
-CREATE TABLE IF NOT EXISTS  public."time" (
+CREATE TABLE IF NOT EXISTS  public.time (
 	start_time timestamp NOT NULL,
 	"hour" int4,
 	"day" int4,
@@ -81,3 +81,8 @@ CREATE TABLE IF NOT EXISTS  public.users (
 	"level" varchar(256),
 	CONSTRAINT users_pkey PRIMARY KEY (userid)
 );
+
+
+
+
+
