@@ -23,23 +23,24 @@ class DataQualityOperator(BaseOperator):
       
 
     def execute(self, context):
+        self.log.info(f"Validating if tables {self.table_names} are empty:")
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
         
         for t in self.table_names:
             q = DataQualityOperator.q.format(t)
-            logging.info(q)
             result = redshift.get_records(q)
             if result is None or result[0][0] < 1:
-                logging.error("No records found")
+                self.log.error("No records found")
                 raise ValueError('No records found')
-            
+        
+        self.log.info(f"All tables have records.")
+        
+        self.log.info(f"Validating null values:")
         for q in self.sql_code:
-            logging.info(q)
             result = redshift.get_records(q)
-            logging.info(result)
             if result[0][0] != 0:
-                logging.error("Validation faild")
+                self.log.error("Validation failed")
                 error_msg = f"Query {q} Failed"
                 raise ValueError(error_msg)
 
-        logging.info("Data quality checks have been successful.")
+        self.log.info("Data quality checks have been successful.")

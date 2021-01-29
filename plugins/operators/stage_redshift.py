@@ -31,12 +31,14 @@ class StageToRedshiftOperator(BaseOperator):
         self.table_name = table_name
         self.json = json
 
-    def execute(self, context):       
+    def execute(self, context):    
+        self.log.info(f"Creating {self.table_name} Redshift stage table")
+
         aws_hook = AwsHook(self.aws_credentials_id)
         credentials = aws_hook.get_credentials()
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
-        self.log.info(f"Clearing data from {self.table_name} Redshift table")
+        self.log.info(f"Removing previous records")
         redshift.run("DELETE FROM {}".format(self.table_name))
         
         if self.table_name == 'staging_events':

@@ -3,8 +3,8 @@ import os
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.postgres_operator import PostgresOperator
-from airflow.operators import (StageToRedshiftOperator, 
-                               LoadFactsDimensionsOperator, DataQualityOperator)
+from airflow.operators import (StageToRedshiftOperator, LoadDimensionOperator,
+                               LoadFactOperator, DataQualityOperator)
 from helpers import SqlQueries
 
 default_args = {
@@ -51,15 +51,15 @@ stage_songs_to_redshift = StageToRedshiftOperator(
     table_name = 'staging_songs'
 )
 
-load_songplays_table = LoadFactsDimensionsOperator(
+load_songplays_table = LoadFactOperator(
     task_id='Load_songplays_fact_table',
     dag=dag,
     redshift_conn_id = 'redshift',    
     table_name = 'songplays',
-    sql_code = SqlQueries.songplay_table_insert,
-    empty_table = False)
+    sql_code = SqlQueries.songplay_table_insert
+)
     
-load_user_dimension_table = LoadFactsDimensionsOperator(
+load_user_dimension_table = LoadDimensionOperator(
     task_id='Load_user_dim_table',
     dag=dag,
     redshift_conn_id = 'redshift',    
@@ -68,7 +68,7 @@ load_user_dimension_table = LoadFactsDimensionsOperator(
     empty_table = True
 )
 
-load_song_dimension_table = LoadFactsDimensionsOperator(
+load_song_dimension_table = LoadDimensionOperator(
     task_id='Load_song_dim_table',
     dag=dag,
     redshift_conn_id = 'redshift',    
@@ -77,7 +77,7 @@ load_song_dimension_table = LoadFactsDimensionsOperator(
     empty_table = True
 )
 
-load_artist_dimension_table = LoadFactsDimensionsOperator(
+load_artist_dimension_table = LoadDimensionOperator(
     task_id='Load_artist_dim_table',
     dag=dag,
     redshift_conn_id = 'redshift',    
@@ -86,7 +86,7 @@ load_artist_dimension_table = LoadFactsDimensionsOperator(
     empty_table = True
 )
 
-load_time_dimension_table = LoadFactsDimensionsOperator(
+load_time_dimension_table = LoadDimensionOperator(
     task_id='Load_time_dim_table',
     dag=dag,
     redshift_conn_id = 'redshift',    
