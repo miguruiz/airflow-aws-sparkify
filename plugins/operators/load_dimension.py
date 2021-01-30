@@ -6,7 +6,8 @@ class LoadDimensionOperator(BaseOperator):
 
     ui_color = '#80BD9E'
 
-    insert_sql = '''insert into {} ({}); '''
+    insert_sql = '''INSERT INTO ({}); '''
+    truncate_sql = ''' TRUNCATE TABLE {}'''
 
 
     @apply_defaults
@@ -14,24 +15,27 @@ class LoadDimensionOperator(BaseOperator):
                  redshift_conn_id = '',    
                  table_name = '',
                  sql_code = "",
-                 empty_table = False,
+                 insert_type = '', # INSERT or TRUNCATE
                  *args, **kwargs):
 
         super(LoadDimensionOperator, self).__init__(*args, **kwargs)
         self.redshift_conn_id = redshift_conn_id
-        self.table_name = table_name
+        self.table_name = table_name.upper()
         self.sql_code = sql_code
-        self.empty_table = empty_table
+        self.insert_type = insert_type
 
     def execute(self, context):
-        self.log.info(f"Creating {self.table_name} Redshift dimension table")
+        if not (self.insert_type == 'INSERT' or self.insert_type == 'TRUNCATE'):
+            raise ValueError(f"insert type {self.insert_type} is not insert or truncate")
+        
+        
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
+        if self.insert_type == 'TRUNCATE':
+            self.log.info(f"Truncating {self.table_name} Redshift dimension table")
+            redshift.run(self.truncate_sql.format(self.table_name))
 
-        if(self.empty_table):
-            self.log.info(f"Deleting previous records")
-            self.log.info(f"Clearing data from {self.table_name} Redshift table")
-            redshift.run("DELETE FROM {}".format(self.table_name))
-
+           
+        self.log.info(f"Inserting into {self.table_name} Redshift dimension table")
         formatted_sql = LoadDimensionOperator.insert_sql.format(
             self.table_name,
             self.sql_code

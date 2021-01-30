@@ -39,7 +39,7 @@ class StageToRedshiftOperator(BaseOperator):
         redshift = PostgresHook(postgres_conn_id=self.redshift_conn_id)
 
         self.log.info(f"Removing previous records")
-        redshift.run("DELETE FROM {}".format(self.table_name))
+        redshift.run("TRUNCATE TABLE {}".format(self.table_name))
         
         if self.table_name == 'staging_events':
             path = self.s3_path.format(**context)

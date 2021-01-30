@@ -65,7 +65,7 @@ load_user_dimension_table = LoadDimensionOperator(
     redshift_conn_id = 'redshift',    
     table_name = 'users',
     sql_code = SqlQueries.user_table_insert,
-    empty_table = True
+    insert_type = 'INSERT' # INSERT or TRUNCATE
 )
 
 load_song_dimension_table = LoadDimensionOperator(
@@ -74,7 +74,7 @@ load_song_dimension_table = LoadDimensionOperator(
     redshift_conn_id = 'redshift',    
     table_name = 'songs',
     sql_code = SqlQueries.song_table_insert,
-    empty_table = True
+    insert_type = 'INSERT' # INSERT or TRUNCATE
 )
 
 load_artist_dimension_table = LoadDimensionOperator(
@@ -83,7 +83,8 @@ load_artist_dimension_table = LoadDimensionOperator(
     redshift_conn_id = 'redshift',    
     table_name = 'artists',
     sql_code = SqlQueries.artist_table_insert,
-    empty_table = True
+    insert_type = 'INSERT' # INSERT or TRUNCATE
+
 )
 
 load_time_dimension_table = LoadDimensionOperator(
@@ -92,7 +93,7 @@ load_time_dimension_table = LoadDimensionOperator(
     redshift_conn_id = 'redshift',    
     table_name = 'time',
     sql_code = SqlQueries.time_table_insert,
-    empty_table = True
+    insert_type = 'INSERT' # INSERT or TRUNCATE
 )
 
 
@@ -113,23 +114,7 @@ end_operator = DummyOperator(task_id='Stop_execution',  dag=dag)
 
 #Dependancies
 
-start_operator >> create_tables
-
-create_tables >> stage_events_to_redshift
-create_tables >> stage_songs_to_redshift
-
-
-stage_events_to_redshift >> load_songplays_table
-stage_songs_to_redshift >> load_songplays_table
-
-load_songplays_table >> load_song_dimension_table 
-load_songplays_table >> load_user_dimension_table
-load_songplays_table >> load_artist_dimension_table
-load_songplays_table >> load_time_dimension_table
-
-load_song_dimension_table >> run_quality_checks
-load_user_dimension_table >>  run_quality_checks
-load_artist_dimension_table >> run_quality_checks
-load_time_dimension_table >> run_quality_checks
-
-run_quality_checks >> end_operator
+start_operator >> create_tables >> [stage_events_to_redshift,stage_songs_to_redshift] \
+>> load_songplays_table >> [load_song_dimension_table, load_user_dimension_table, \
+                           load_artist_dimension_table,load_time_dimension_table] \
+>> run_quality_checks >> end_operator
